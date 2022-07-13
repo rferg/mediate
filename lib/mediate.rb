@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "mediate/version"
+require_relative "mediate/mediator"
+require "singleton"
 
 module Mediate
-  class Error < StandardError; end
-  # Your code goes here...
+  def self.mediator
+    Mediator.instance
+  end
 end
