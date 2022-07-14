@@ -2,8 +2,8 @@
 
 module Mediate
   class PrerequestBehavior
-    def self.handles(request_class)
-      Mediate.mediator.register_prerequest_behavior(self, request_class)
+    def self.handles(request_class = Mediate::Request, mediator = Mediate.mediator)
+      mediator.register_prerequest_behavior(self, request_class)
     end
 
     def handle(_request)

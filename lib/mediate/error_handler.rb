@@ -2,7 +2,7 @@
 
 module Mediate
   class ErrorHandler
-    def self.handles(exception_class)
+    def self.handles(exception_class = StandardError)
       Mediate.mediator.register_error_handler(self, exception_class)
     end
 

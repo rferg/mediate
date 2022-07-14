@@ -2,8 +2,8 @@
 
 module Mediate
   class RequestHandler
-    def self.handles(request_class)
-      Mediate.mediator.register_request_handler(self, request_class)
+    def self.handles(request_class, mediator = Mediate.mediator)
+      mediator.register_request_handler(self, request_class)
     end
 
     def handle(_request)

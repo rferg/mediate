@@ -2,8 +2,8 @@
 
 module Mediate
   class PostrequestBehavior
-    def self.handles(request_class)
-      Mediate.mediator.register_postrequest_behavior(self, request_class)
+    def self.handles(request_class = Mediate::Request, mediator = Mediate.mediator)
+      mediator.register_postrequest_behavior(self, request_class)
     end
 
     def handle(_request, _result)
