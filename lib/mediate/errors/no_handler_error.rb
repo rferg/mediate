@@ -4,7 +4,7 @@ module Mediate
   module Errors
     class NoHandlerError < StandardError
       def initialize(request_class)
-        super("Did not find handler for #{request_class}. Did you forget to register one?")
+        super("No handler for #{request_class}. Call handles(#{request_class}) on a RequestHandler to register.")
       end
     end
   end

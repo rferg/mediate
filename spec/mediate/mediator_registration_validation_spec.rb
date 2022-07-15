@@ -1,32 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-
-module Stubs
-  class Request < Mediate::Request; end
-
-  class RequestHandler < Mediate::RequestHandler
-    def handle(request); end
-  end
-
-  class Prerequest < Mediate::PrerequestBehavior
-    def handle(request); end
-  end
-
-  class Postrequest < Mediate::PostrequestBehavior
-    def handle(request, response); end
-  end
-
-  class Notif < Mediate::Notification; end
-
-  class NotifHandler < Mediate::NotificationHandler
-    def handle(notif); end
-  end
-
-  class ErrorHandler < Mediate::ErrorHandler
-    def handle(error); end
-  end
-end
+require_relative "../stubs/basic"
 
 RSpec.describe Mediate::Mediator do
   let(:mediator) { Class.new(Mediate::Mediator).instance }
@@ -107,7 +82,7 @@ RSpec.describe Mediate::Mediator do
     it "raises ArgumentError if handler class does not inherit from Mediate::ErrorHandler" do
       bad_classes = [Array, Numeric, Mediate::PrerequestBehavior, Mediate::ErrorHandler, nil]
       bad_classes.each do |bad_class|
-        expect { mediator.register_error_handler(bad_class, StandardError) }
+        expect { mediator.register_error_handler(bad_class, StandardError, Mediate::Request) }
           .to raise_error(ArgumentError, /#{bad_class}/)
       end
     end
@@ -115,7 +90,15 @@ RSpec.describe Mediate::Mediator do
     it "raises ArgumentError if given exception class is not or does not inherit from StandardError" do
       bad_classes = [Array, Numeric, Mediate::Request, Exception]
       bad_classes.each do |bad_class|
-        expect { mediator.register_error_handler(Stubs::ErrorHandler, bad_class) }
+        expect { mediator.register_error_handler(Stubs::ErrorHandler, bad_class, Mediate::Request) }
+          .to raise_error(ArgumentError, /#{bad_class}/)
+      end
+    end
+
+    it "raises ArgumentError if given dispatchable class is not or does not inherit from Request or Notification" do
+      bad_classes = [Array, Numeric, StandardError]
+      bad_classes.each do |bad_class|
+        expect { mediator.register_error_handler(Stubs::ErrorHandler, StandardError, bad_class) }
           .to raise_error(ArgumentError, /#{bad_class}/)
       end
     end
