@@ -53,7 +53,8 @@ RSpec.describe Mediate::Mediator do
       end
 
       it "returns from pipeline with postrequest behaviors" do
-        expected = [Stubs::Recording::RequestHandler, Stubs::Recording::PostTwoHandler, Stubs::Recording::PostOneHandler]
+        expected = [Stubs::Recording::RequestHandler, Stubs::Recording::PostTwoHandler,
+                    Stubs::Recording::PostOneHandler]
         mediator.register_postrequest_behavior(Stubs::Recording::PostOneHandler, Stubs::Recording::Request)
         mediator.register_postrequest_behavior(Stubs::Recording::PostTwoHandler, Stubs::Recording::Request)
         actual = mediator.dispatch(Stubs::Recording::Request.new)
@@ -151,7 +152,7 @@ RSpec.describe Mediate::Mediator do
                                         Stubs::Recording::Request)
         expected = [Stubs::Recording::RaiseHandler, Stubs::Recording::ErrorRaiseHandler]
         request = Stubs::Recording::Request.new
-        expect { mediator.dispatch(request) }.to raise_error
+        expect { mediator.dispatch(request) }.to raise_error(RuntimeError)
         expect(request.classes).to match_array(expected)
       end
     end

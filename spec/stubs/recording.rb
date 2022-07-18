@@ -31,6 +31,33 @@ module Stubs
 
     class DerivedRequest < Request; end
 
+    class Notif < Stubs::Notif
+      attr_reader :classes, :exceptions
+
+      def initialize(classes = [])
+        @classes = classes
+        @exceptions = []
+        super()
+      end
+    end
+
+    class DerivedNotif < Notif; end
+
+    class NotifHandler < Mediate::NotificationHandler
+      def handle(notif)
+        notif.classes << self
+      end
+    end
+
+    class DerivedNotifHandler < NotifHandler; end
+
+    class RaiseNotifHandler < NotifHandler
+      def handle(notif)
+        notif.classes << self
+        raise "from:#{self}"
+      end
+    end
+
     class PreOneHandler < Mediate::PrerequestBehavior
       def handle(request)
         request.classes << self
