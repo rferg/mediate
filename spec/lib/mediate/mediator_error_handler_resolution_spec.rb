@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-require_relative "../stubs/basic"
-require_relative "../stubs/recording"
-
 module ErrorResolutionSpec
   class SuperTestError < StandardError; end
   class TestError < SuperTestError; end

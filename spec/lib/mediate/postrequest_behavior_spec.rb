@@ -1,6 +1,4 @@
-# frozen_string_literal
-
-require_relative "../stubs/basic"
+# frozen_string_literal: true
 
 RSpec.describe Mediate::PostrequestBehavior do
   describe "#handles" do

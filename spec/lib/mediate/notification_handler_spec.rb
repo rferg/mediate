@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../stubs/basic"
-
 RSpec.describe Mediate::NotificationHandler do
   describe "#handles" do
     it "calls register_notification_handler on Mediator" do
