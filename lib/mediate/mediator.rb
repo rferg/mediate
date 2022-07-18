@@ -75,7 +75,7 @@ module Mediate
     end
 
     def register_error_handler(handler_class, exception_class, dispatch_class)
-      if dispatch_class <= Mediate::Notification
+      if dispatch_class <= NOTIF_BASE
         register_error_handler_for_dispatch(handler_class, exception_class, dispatch_class, NOTIF_BASE)
       else
         register_error_handler_for_dispatch(handler_class, exception_class, dispatch_class, REQUEST_BASE)
