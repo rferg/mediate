@@ -11,6 +11,7 @@ RSpec.describe Mediate::Mediator do
     it "raises ArgumentError if request is nil" do
       expect { mediator.dispatch(nil) }.to raise_error(ArgumentError, "request cannot be nil")
     end
+
     context "with no request handler" do
       it "raises NoHandlerError if no handlers registered" do
         expect { mediator.dispatch(Stubs::Request.new) }

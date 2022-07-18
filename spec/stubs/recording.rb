@@ -42,6 +42,7 @@ module Stubs
     end
 
     class DerivedNotif < Notif; end
+    class OtherNotif < Notif; end
 
     class NotifHandler < Mediate::NotificationHandler
       def handle(notif)
@@ -50,6 +51,8 @@ module Stubs
     end
 
     class DerivedNotifHandler < NotifHandler; end
+    class AnotherNotifHandler < NotifHandler; end
+    class OtherNotifHandler < NotifHandler; end
 
     class RaiseNotifHandler < NotifHandler
       def handle(notif)
@@ -57,6 +60,8 @@ module Stubs
         raise "from:#{self}"
       end
     end
+
+    class OtherRaiseNotifHandler < RaiseNotifHandler; end
 
     class PreOneHandler < Mediate::PrerequestBehavior
       def handle(request)
