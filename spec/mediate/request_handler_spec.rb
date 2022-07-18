@@ -13,7 +13,7 @@ RSpec.describe Mediate::RequestHandler do
   end
 
   describe "#handle" do
-    it "should raise NoMethodError" do
+    it "raises NoMethodError" do
       expect { Mediate::RequestHandler.handle(nil) }.to raise_error(NoMethodError)
     end
   end
