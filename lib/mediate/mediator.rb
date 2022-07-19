@@ -13,10 +13,15 @@ require_relative "request"
 require_relative "request_handler"
 
 module Mediate
+  #
+  # Implements the mediator pattern.  Call {#dispatch} to send requests and
+  #   {#publish} to publish notifications.
+  #
   class Mediator
     include Singleton
     REQUEST_BASE = Mediate::Request
     NOTIF_BASE = Mediate::Notification
+    private_constant :REQUEST_BASE, :NOTIF_BASE
 
     def initialize
       @request_handlers = {}
@@ -26,6 +31,16 @@ module Mediate
       @exception_handlers = {}
     end
 
+    #
+    # Sends a request to the registered handler, passing to any applicable pipeline behaviors.
+    #
+    # @param [Mediate::Request] request
+    #
+    # @return the response returned from the Mediate::RequestHandler
+    #
+    # @raise [ArgumentError] if request is nil
+    # @raise [Mediate::Errors::NoHandlerError] if no handlers have been registered for the given request's type
+    #
     def dispatch(request)
       raise ArgumentError, "request cannot be nil" if request.nil?
 
@@ -37,6 +52,13 @@ module Mediate
       run_request_pipeline(request, prerequest_handlers, request_handler, postrequest_handlers)
     end
 
+    #
+    # Sends a notification to all register handlers for the given notification's type.
+    #
+    # @param [Mediate::Notification] notification
+    #
+    # @return [void]
+    #
     def publish(notification)
       raise ArgumentError, "notification cannot be nil" if notification.nil?
 
@@ -141,6 +163,9 @@ module Mediate
       collect_by_inheritance(hash, key_class.superclass, base_class, new_collected)
     end
 
+    #
+    # A null object for a Mediate::RequestHandler
+    #
     class NullHandler; end
   end
 end
