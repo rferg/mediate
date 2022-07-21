@@ -102,6 +102,7 @@ module Stubs
     end
 
     class ErrorTwoHandler < ErrorOneHandler; end
+    class ErrorThreeHandler < ErrorOneHandler; end
 
     class ErrorRaiseHandler < Mediate::ErrorHandler
       def handle(request, exception)

@@ -8,14 +8,14 @@ RSpec.describe Mediate::Mediator do
       expect { mediator.publish(nil) }.to raise_error(ArgumentError, "notification cannot be nil")
     end
 
-    it "should not raise if no handlers registered for notificiation" do
+    it "does not raise if no handlers registered for notificiation" do
       notification = Stubs::Recording::Notif.new
       mediator.publish(notification)
       expect(notification.classes).to be_empty
       expect(notification.exceptions).to be_empty
     end
 
-    it "should pass notification to all and only handlers registered for that notification type or its superclasses" do
+    it "passes notification to all and only handlers registered for that notification type or its superclasses" do
       notification = Stubs::Recording::DerivedNotif.new
       expected = [Stubs::Recording::DerivedNotifHandler, Stubs::Recording::NotifHandler,
                   Stubs::Recording::AnotherNotifHandler]
@@ -27,7 +27,34 @@ RSpec.describe Mediate::Mediator do
       expect(notification.classes).to match_array(expected)
     end
 
-    it "should call handler only once if it was registered multiple times" do
+    it "uses all and only handlers registered in multiple threads for that notification type or its superclasses" do
+      notif_class = Stubs::Recording::DerivedNotif
+      expected = [Stubs::Recording::DerivedNotifHandler, Stubs::Recording::NotifHandler,
+                  Stubs::Recording::AnotherNotifHandler]
+      threads = []
+      threads << Thread.new do
+        mediator.register_notification_handler(Stubs::Recording::NotifHandler, notif_class.superclass)
+      end
+      threads << Thread.new do
+        mediator.register_notification_handler(Stubs::Recording::DerivedNotifHandler, notif_class)
+      end
+      threads << Thread.new do
+        mediator.register_notification_handler(Stubs::Recording::AnotherNotifHandler, Mediate::Notification)
+      end
+      threads << Thread.new do
+        mediator.register_notification_handler(Stubs::Recording::OtherNotifHandler, Stubs::Recording::OtherNotif)
+      end
+      threads.map(&:join)
+      5.times.map do
+        Thread.new do
+          notification = notif_class.new
+          mediator.publish(notification)
+          expect(notification.classes).to match_array(expected)
+        end
+      end.map(&:join)
+    end
+
+    it "calls handler only once if it was registered multiple times" do
       notification = Stubs::Recording::Notif.new
       expected = [Stubs::Recording::NotifHandler]
       3.times do
@@ -37,7 +64,7 @@ RSpec.describe Mediate::Mediator do
       expect(notification.classes).to match_array(expected)
     end
 
-    it "should call handler only once if it was registered for different applicable Notification types" do
+    it "calls handler only once if it was registered for different applicable Notification types" do
       notification = Stubs::Recording::Notif.new
       expected = [Stubs::Recording::NotifHandler]
       mediator.register_notification_handler(Stubs::Recording::NotifHandler, notification.class)
@@ -46,7 +73,7 @@ RSpec.describe Mediate::Mediator do
       expect(notification.classes).to match_array(expected)
     end
 
-    it "should call all handlers (and any applicable error handlers) if one raises" do
+    it "calls all handlers (and any applicable error handlers) if one raises" do
       notification = Stubs::Recording::Notif.new
       expected = [Stubs::Recording::NotifHandler, Stubs::Recording::RaiseNotifHandler,
                   Stubs::Recording::ErrorOneHandler, Stubs::Recording::OtherNotifHandler]
@@ -60,7 +87,7 @@ RSpec.describe Mediate::Mediator do
       expect(notification.exceptions[0].message).to match(/#{Stubs::Recording::RaiseNotifHandler}/)
     end
 
-    it "should call all handlers (and any applicable error handlers) if multiple raise" do
+    it "calls all handlers (and any applicable error handlers) if multiple raise" do
       notification = Stubs::Recording::Notif.new
       expected = [Stubs::Recording::NotifHandler, Stubs::Recording::RaiseNotifHandler,
                   Stubs::Recording::ErrorOneHandler, Stubs::Recording::OtherRaiseNotifHandler,

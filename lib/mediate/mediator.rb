@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "set"
+require "concurrent"
 require "singleton"
 
 require_relative "errors/no_handler_error"
@@ -25,11 +25,11 @@ module Mediate
     private_constant :REQUEST_BASE, :NOTIF_BASE
 
     def initialize
-      @request_handlers = {}
-      @notification_handlers = {}
-      @prerequest_behaviors = {}
-      @postrequest_behaviors = {}
-      @exception_handlers = {}
+      @request_handlers = Concurrent::Map.new
+      @notification_handlers = Concurrent::Map.new
+      @prerequest_behaviors = Concurrent::Map.new
+      @postrequest_behaviors = Concurrent::Map.new
+      @exception_handlers = Concurrent::Map.new
     end
 
     #
@@ -119,8 +119,8 @@ module Mediate
       validate_base_class(handler_class, Mediate::ErrorHandler)
       validate_base_class(exception_class, StandardError, allow_base: true)
       validate_base_class(dispatch_class, dispatch_base_class, allow_base: true)
-      @exception_handlers[exception_class] = {} unless @exception_handlers.key?(exception_class)
-      append_to_hash_value(@exception_handlers[exception_class], dispatch_class, handler_class)
+      map = @exception_handlers.fetch_or_store(exception_class, Concurrent::Map.new)
+      append_to_hash_value(map, dispatch_class, handler_class)
     end
 
     def run_request_pipeline(request, pre_handlers, request_handler, post_handlers)
@@ -135,7 +135,7 @@ module Mediate
     end
 
     def append_to_hash_value(hash, key, value)
-      hash[key] = hash.fetch(key, Set.new) << value
+      hash[key] = hash.fetch(key, Concurrent::Set.new) << value
     end
 
     def validate_base_class(given, expected_base, allow_base: false)
@@ -148,7 +148,7 @@ module Mediate
 
     def handle_exception(dispatched, exception, dispatch_base_class)
       exception_to_dispatched_maps = collect_by_inheritance(@exception_handlers, exception.class, StandardError)
-      handler_classes = exception_to_dispatched_maps.reduce(Set.new) do |memo, curr|
+      handler_classes = exception_to_dispatched_maps.reduce(Concurrent::Set.new) do |memo, curr|
         collect_by_inheritance(curr, dispatched.class, dispatch_base_class, memo)
       end
       handler_classes.each { |handler_class| handler_class.new.handle(dispatched, exception) }
@@ -162,11 +162,11 @@ module Mediate
       resolve_handler(handlers_hash, request_class.superclass, base_class)
     end
 
-    def collect_by_inheritance(hash, key_class, base_class, collected = Set.new)
-      values = hash.fetch(key_class, Set.new)
+    def collect_by_inheritance(hash, key_class, base_class, collected = Concurrent::Set.new)
+      values = hash.fetch(key_class, Concurrent::Set.new)
       # Wrap values in Set and flatten to account for case when values is not a Set itself.
       # This may break if values is nested Sets, although we don't have that case yet.
-      new_collected = (collected || Set.new) | Set[values].flatten
+      new_collected = (collected || Concurrent::Set.new) | Concurrent::Set[values].flatten
       return new_collected if key_class > base_class
 
       collect_by_inheritance(hash, key_class.superclass, base_class, new_collected)
