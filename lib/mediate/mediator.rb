@@ -4,6 +4,7 @@ require "set"
 require "singleton"
 
 require_relative "errors/no_handler_error"
+require_relative "errors/request_handler_already_exists_error"
 require_relative "error_handler"
 require_relative "notification"
 require_relative "notification_handler"
@@ -75,6 +76,7 @@ module Mediate
     def register_request_handler(handler_class, request_class)
       validate_base_class(handler_class, Mediate::RequestHandler)
       validate_base_class(request_class, REQUEST_BASE)
+      raise_if_request_handler_exists(request_class, handler_class)
       @request_handlers[request_class] = handler_class
     end
 
@@ -105,6 +107,13 @@ module Mediate
     end
 
     private
+
+    def raise_if_request_handler_exists(request_class, new_handler)
+      registered = @request_handlers.fetch(request_class, nil)
+      return if registered.nil? || registered == new_handler
+
+      raise Errors::RequestHandlerAlreadyExistsError.new(request_class, registered, new_handler)
+    end
 
     def register_error_handler_for_dispatch(handler_class, exception_class, dispatch_class, dispatch_base_class)
       validate_base_class(handler_class, Mediate::ErrorHandler)

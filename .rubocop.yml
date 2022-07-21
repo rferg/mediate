@@ -66,6 +66,8 @@ Lint/UselessRuby2Keywords: # new in 1.23
   Enabled: true
 Metrics/BlockLength:
   IgnoredMethods: ['describe', 'context']
+Metrics/ClassLength:
+  Max: 150
 Naming/BlockForwarding: # new in 1.24
   Enabled: true
 Security/CompoundHash: # new in 1.28

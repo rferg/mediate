@@ -81,13 +81,6 @@ RSpec.describe Mediate::Mediator do
         expect(actual).to match_array(expected)
       end
 
-      it "uses last handler registered for request class" do
-        expected = [Stubs::Recording::DerivedRequestHandler]
-        mediator.register_request_handler(Stubs::Recording::DerivedRequestHandler, Stubs::Recording::Request)
-        actual = mediator.dispatch(Stubs::Recording::Request.new)
-        expect(actual).to match_array(expected)
-      end
-
       it "uses handler registered for most derived request class" do
         expected = [Stubs::Recording::RequestHandler]
         # Stubs::Recording::Request inherits from Stubs::Request

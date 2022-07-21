@@ -19,6 +19,16 @@ RSpec.describe Mediate::Mediator do
           .to raise_error(ArgumentError, /#{bad_class}/)
       end
     end
+
+    it "raises RequestHandlerAlreadyExistsHandler if handler already exists for request class and != given handler" do
+      request_class = Stubs::Request
+      original_handler = Stubs::RequestHandler
+      mediator.register_request_handler(original_handler, request_class)
+      expect { mediator.register_request_handler(Stubs::Recording::RequestHandler, request_class) }
+        .to raise_error(Mediate::Errors::RequestHandlerAlreadyExistsError, /#{request_class}/)
+      # It should not raise if same handler is registered for same request
+      expect { mediator.register_request_handler(original_handler, request_class) }.not_to raise_error
+    end
   end
 
   describe "#register_notification_handler" do
