@@ -22,8 +22,7 @@ end
 RSpec.describe Mediate::Mediator do
   let(:mediator) { Class.new(Mediate::Mediator).instance }
 
-  def register_error_handler(error, sendable, expected_handlers)
-    handler = Stubs::Recording::ErrorOneHandler
+  def register_error_handler(error, sendable, expected_handlers, handler: Stubs::Recording::ErrorOneHandler)
     mediator.register_error_handler(handler, error, sendable)
     expected_handlers << handler
   end
@@ -86,6 +85,25 @@ RSpec.describe Mediate::Mediator do
         register_error_handler(ErrorResolutionSpec::SuperTestError, Stubs::Recording::Request, expected)
         call_and_assert
       end
+
+      it "uses error handlers registered in different threads and when handling requests from different threads" do
+        threads = []
+        threads << Thread.new do
+          register_error_handler(ErrorResolutionSpec::SuperTestError, Stubs::Recording::Request, expected,
+                                 handler: Stubs::Recording::ErrorOneHandler)
+        end
+        threads << Thread.new do
+          register_error_handler(ErrorResolutionSpec::TestError, Stubs::Recording::Request, expected,
+                                 handler: Stubs::Recording::ErrorTwoHandler)
+        end
+        threads << Thread.new do
+          register_error_handler(ErrorResolutionSpec::TestError, Stubs::Recording::DerivedRequest, expected,
+                                 handler: Stubs::Recording::ErrorThreeHandler)
+        end
+        threads.map(&:join)
+        # Make sure we get expected result when called from multiple threads.
+        3.times.map { Thread.new { call_and_assert } }.map(&:join)
+      end
     end
 
     describe "#publish" do
@@ -144,6 +162,25 @@ RSpec.describe Mediate::Mediator do
       it "uses error handler registered for base class of registered error and base class of registered Notification" do
         register_error_handler(ErrorResolutionSpec::SuperTestError, Stubs::Recording::Notif, expected)
         call_and_assert
+      end
+
+      it "uses error handlers registered in different threads and when handling requests from different threads" do
+        threads = []
+        threads << Thread.new do
+          register_error_handler(ErrorResolutionSpec::SuperTestError, Stubs::Recording::Notif, expected,
+                                 handler: Stubs::Recording::ErrorOneHandler)
+        end
+        threads << Thread.new do
+          register_error_handler(ErrorResolutionSpec::TestError, Stubs::Recording::DerivedNotif, expected,
+                                 handler: Stubs::Recording::ErrorTwoHandler)
+        end
+        threads << Thread.new do
+          register_error_handler(ErrorResolutionSpec::TestError, Stubs::Recording::Notif, expected,
+                                 handler: Stubs::Recording::ErrorThreeHandler)
+        end
+        threads.map(&:join)
+        # Make sure we get expected result when called from multiple threads.
+        3.times.map { Thread.new { call_and_assert } }.map(&:join)
       end
     end
   end
