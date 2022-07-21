@@ -81,6 +81,34 @@ RSpec.describe Mediate::Mediator do
         expect(actual).to match_array(expected)
       end
 
+      it "uses correct handler and behaviors registered in different threads" do
+        expected = [Stubs::Recording::PreTwoHandler, Stubs::Recording::PreThreeHandler,
+                    Stubs::Recording::RequestHandler, Stubs::Recording::PostTwoHandler]
+        threads = []
+        threads << Thread.new do
+          mediator.register_prerequest_behavior(Stubs::Recording::PreTwoHandler, Stubs::Recording::Request)
+        end
+        threads << Thread.new do
+          mediator.register_prerequest_behavior(Stubs::Recording::PreThreeHandler, Mediate::Request)
+        end
+        threads << Thread.new do
+          mediator.register_postrequest_behavior(Stubs::Recording::PostTwoHandler, Mediate::Request)
+        end
+        threads << Thread.new do
+          mediator.register_prerequest_behavior(Stubs::Recording::PreOneHandler, Stubs::OtherRequest)
+        end
+        threads << Thread.new do
+          mediator.register_postrequest_behavior(Stubs::Recording::PostTwoHandler, Stubs::OtherRequest)
+        end
+        threads.map(&:join)
+        5.times.map do
+          Thread.new do
+            actual = mediator.dispatch(Stubs::Recording::Request.new)
+            expect(actual).to match_array(expected)
+          end
+        end.map(&:join)
+      end
+
       it "uses handler registered for most derived request class" do
         expected = [Stubs::Recording::RequestHandler]
         # Stubs::Recording::Request inherits from Stubs::Request
