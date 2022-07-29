@@ -22,7 +22,7 @@ module Mediate
     #       ## do something with request...
     #     end
     #   end
-    def self.handle_with(mediator = Mediator.mediator, &proc)
+    def self.handle_with(mediator = Mediate.mediator, &proc)
       raise ArgumentError, "expected block to be passed to #handle_with." unless proc
 
       if implicit_handler_defined?
