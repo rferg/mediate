@@ -95,7 +95,7 @@ module Stubs
     end
 
     class ErrorOneHandler < Mediate::ErrorHandler
-      def handle(request, exception)
+      def handle(request, exception, _state)
         request.classes << self
         request.exceptions << exception
       end
@@ -104,11 +104,22 @@ module Stubs
     class ErrorTwoHandler < ErrorOneHandler; end
     class ErrorThreeHandler < ErrorOneHandler; end
 
-    class ErrorRaiseHandler < Mediate::ErrorHandler
-      def handle(request, exception)
-        request.classes << self
-        request.exceptions << exception
+    class ErrorRaiseHandler < ErrorOneHandler
+      def handle(request, exception, state)
+        super(request, exception, state)
         raise "from:#{self}"
+      end
+    end
+
+    class ErrorResolveHandlerDefiner
+      def self.define(result)
+        Class.new(ErrorOneHandler) do
+          @@result = result # rubocop:disable Style/ClassVars
+          def handle(request, exception, state)
+            super(request, exception, state)
+            state.set_as_handled(@@result)
+          end
+        end
       end
     end
   end

@@ -24,6 +24,6 @@ module Stubs
   end
 
   class ErrorHandler < Mediate::ErrorHandler
-    def handle(error); end
+    def handle(request, error, statue); end
   end
 end
