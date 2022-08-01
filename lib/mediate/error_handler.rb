@@ -31,10 +31,13 @@ module Mediate
     #
     # @param [Mediate::Request, Mediate::Notification] _dispatched the request or notification that was been handled
     # @param [StandardError] _exception the exception that was raised
+    # @param [Mediate::ErrorHandlerState] _state the result of handling the current exception--
+    #   call state.set_as_handled(result) to skip subsequent error handlers and return result
+    #   (if the exception was thrown while handling a request; notification handlers will not return anything)
     #
     # @return [void]
     #
-    def handle(_dispatched, _exception)
+    def handle(_dispatched, _exception, _state)
       raise NoMethodError, "handle must be implemented"
     end
   end

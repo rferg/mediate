@@ -132,7 +132,6 @@ module Mediate
       result
     rescue StandardError => e
       handle_exception(request, e, REQUEST_BASE)
-      result
     end
 
     def append_to_hash_value(hash, key, value)
@@ -152,7 +151,12 @@ module Mediate
       handler_classes = exception_to_dispatched_maps.reduce(Concurrent::Set.new) do |memo, curr|
         collect_by_inheritance(curr, dispatched.class, dispatch_base_class, memo)
       end
-      handler_classes.each { |handler_class| handler_class.new.handle(dispatched, exception) }
+      state = ErrorHandlerState.new
+      handler_classes.each do |handler_class|
+        handler_class.new.handle(dispatched, exception, state)
+        break if state.handled?
+      end
+      state.result
     end
 
     def resolve_handler(handlers_hash, request_class, base_class)

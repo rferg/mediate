@@ -153,17 +153,6 @@ RSpec.describe Mediate::Mediator do
         expect(request.classes).to match_array(expected)
       end
 
-      it "still returns result if postrequest behavior raises and no error handler does" do
-        mediator.register_request_handler(Stubs::Recording::RequestHandler, Stubs::Recording::Request)
-        mediator.register_postrequest_behavior(Stubs::Recording::PostRaiseHandler, Stubs::Recording::Request)
-        mediator.register_error_handler(Stubs::Recording::ErrorOneHandler, StandardError,
-                                        Stubs::Recording::Request)
-        expected = [Stubs::Recording::RequestHandler, Stubs::Recording::PostRaiseHandler,
-                    Stubs::Recording::ErrorOneHandler]
-        actual = mediator.dispatch(Stubs::Recording::Request.new)
-        expect(actual).to match_array(expected)
-      end
-
       it "raises if error handler raises" do
         mediator.register_request_handler(Stubs::Recording::RaiseHandler, Stubs::Recording::Request)
         mediator.register_error_handler(Stubs::Recording::ErrorRaiseHandler, StandardError,
@@ -172,6 +161,20 @@ RSpec.describe Mediate::Mediator do
         request = Stubs::Recording::Request.new
         expect { mediator.dispatch(request) }.to raise_error(RuntimeError)
         expect(request.classes).to match_array(expected)
+      end
+
+      it "returns early with result if error handler sets state as handled" do
+        expected_result = "test_result"
+        error_handler = Stubs::Recording::ErrorResolveHandlerDefiner.define(expected_result)
+        mediator.register_request_handler(Stubs::Recording::RaiseHandler, Stubs::Recording::Request)
+        # Since request class is higher in inheritance chain, this should always run last
+        mediator.register_error_handler(Stubs::Recording::ErrorOneHandler, StandardError, Mediate::Request)
+        mediator.register_error_handler(error_handler, StandardError, Stubs::Recording::Request)
+        expected_classes = [Stubs::Recording::RaiseHandler, error_handler]
+        request = Stubs::Recording::Request.new
+        result = mediator.dispatch(request)
+        expect(result).to be(expected_result)
+        expect(request.classes).to match_array(expected_classes)
       end
     end
   end

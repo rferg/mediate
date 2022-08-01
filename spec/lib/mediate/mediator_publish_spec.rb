@@ -102,5 +102,16 @@ RSpec.describe Mediate::Mediator do
       expect(notification.exceptions[0].message).to match(/#{Stubs::Recording::RaiseNotifHandler}/)
       expect(notification.exceptions[1].message).to match(/#{Stubs::Recording::OtherRaiseNotifHandler}/)
     end
+
+    it "exits early if error handler resolves" do
+      notification = Stubs::Recording::Notif.new
+      resolving_error_handler = Stubs::Recording::ErrorResolveHandlerDefiner.define(1)
+      expected = [Stubs::Recording::RaiseNotifHandler, resolving_error_handler]
+      mediator.register_error_handler(Stubs::Recording::ErrorOneHandler, StandardError, Mediate::Notification)
+      mediator.register_error_handler(resolving_error_handler, StandardError, notification.class)
+      mediator.register_notification_handler(Stubs::Recording::RaiseNotifHandler, notification.class)
+      mediator.publish(notification)
+      expect(notification.classes).to match_array(expected)
+    end
   end
 end
