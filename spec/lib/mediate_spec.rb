@@ -22,4 +22,26 @@ RSpec.describe Mediate do
       expect(mediator2).to be(mediator3)
     end
   end
+
+  describe "#dispatch" do
+    it "passes request to mediator instance and returns response" do
+      request = Stubs::Request.new
+      expected = "test_response"
+      mediator = double("mediator")
+      allow(Mediate).to receive(:mediator).and_return(mediator)
+      expect(mediator).to receive(:dispatch).with(request).and_return(expected)
+      actual = Mediate.dispatch(request)
+      expect(actual).to be(expected)
+    end
+  end
+
+  describe "#publish" do
+    it "passes notification to mediator instance" do
+      notification = Stubs::Notif.new
+      mediator = double("mediator")
+      allow(Mediate).to receive(:mediator).and_return(mediator)
+      expect(mediator).to receive(:publish).with(notification)
+      Mediate.publish(notification)
+    end
+  end
 end

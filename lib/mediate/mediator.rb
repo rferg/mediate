@@ -26,11 +26,7 @@ module Mediate
     private_constant :REQUEST_BASE, :NOTIF_BASE
 
     def initialize
-      @request_handlers = Concurrent::Map.new
-      @notification_handlers = Concurrent::Map.new
-      @prerequest_behaviors = Concurrent::Map.new
-      @postrequest_behaviors = Concurrent::Map.new
-      @exception_handlers = Concurrent::Map.new
+      reset
     end
 
     #
@@ -105,6 +101,20 @@ module Mediate
       else
         register_error_handler_for_dispatch(handler_class, exception_class, dispatch_class, REQUEST_BASE)
       end
+    end
+
+    #
+    # Clears all registered handlers and behaviors for this Mediator instance. This is useful
+    #   for cleaning up after integration tests.
+    #
+    # @return [void]
+    #
+    def reset
+      @request_handlers = Concurrent::Map.new
+      @notification_handlers = Concurrent::Map.new
+      @prerequest_behaviors = Concurrent::Map.new
+      @postrequest_behaviors = Concurrent::Map.new
+      @exception_handlers = Concurrent::Map.new
     end
 
     private
