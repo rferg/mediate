@@ -6,14 +6,14 @@ Gem::Specification.new do |spec|
   spec.name = "mediate"
   spec.version = Mediate::VERSION
   spec.authors = ["Ryan Ferguson"]
-  spec.email = ["ryan.ferguson@madeintandem.com"]
+  spec.email = ["rmferguson77@gmail.com"]
 
   spec.summary = "Simple mediator implementation"
   spec.homepage = "https://github.com/rferg/mediate"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
 
-  spec.metadata["allowed_push_host"] = "https://github.com/rferg/mediate"
+  spec.metadata["allowed_push_host"] = "https://ruby-gems.org"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/rferg/mediate"
