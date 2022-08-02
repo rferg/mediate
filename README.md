@@ -2,9 +2,9 @@
 
 A simple mediator implementation for Ruby inspired by [Mediatr](https://github.com/jbogard/MediatR).
 
-Decouple application components by sending a request through the mediator and receiving a response from a handler, instead of directly calling a methods on imported classes.
+Decouple application components by sending a request through the mediator and receiving a response from a handler, instead of directly calling methods on imported classes.
 
-Supports request/response, notifications (i.e., events), pre- and post-request decorators, and error handling.
+Supports request/response, notifications (i.e., events), pre- and post-request handler decorators, and error handling.
 
 - [Installation](#installation)
 - [Usage](#usage)
