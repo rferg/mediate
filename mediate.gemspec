@@ -6,7 +6,6 @@ Gem::Specification.new do |spec|
   spec.name = "mediate"
   spec.version = Mediate::VERSION
   spec.authors = ["Ryan Ferguson"]
-  spec.email = ["rmferguson77@gmail.com"]
 
   spec.summary = "Simple mediator implementation"
   spec.homepage = "https://github.com/rferg/mediate"
