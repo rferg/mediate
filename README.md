@@ -176,7 +176,9 @@ end
 
 ### Notifications
 
-Notifications are messages that can be passed to multiple handlers via the mediator's `publish` method.  No response is returned from `publish`.  Define a notification by inheriting from `Mediate::Notification`.
+Notifications are messages that can be passed to multiple.  To publish a notification, call `Mediate.publish(notification)`.  No response is returned from `publish`.
+
+Define a notification by inheriting from `Mediate::Notification`.
 
 ```ruby
 class PostCreated < Mediate::Notification
