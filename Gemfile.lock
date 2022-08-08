@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mediate (0.1.1)
+    mediate (0.1.2)
       concurrent-ruby (~> 1.1)
 
 GEM
