@@ -51,7 +51,7 @@ module Mediate
     end
 
     #
-    # Sends a notification to all register handlers for the given notification's type.
+    # Sends a notification to all registered handlers for the given notification's type.
     #
     # @param [Mediate::Notification] notification
     #
