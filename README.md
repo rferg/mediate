@@ -256,9 +256,9 @@ How can you test a request handler defined using `handle_with` and a lambda like
 
 ```ruby
 class ExampleRequest < Mediate::Request
-    handle_with lambda do |request|
+    handle_with lambda { |request|
         # ....
-    end
+    }
 end
 ```
 
