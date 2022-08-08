@@ -96,7 +96,7 @@ Note that only one handler can be registered for a particular request class; att
 
 #### Implicit handler declaration
 
-For simple handlers, you can skip the explicit `RequestHandler` declaration above and instead pass a block to `Request.handle_with`.
+For simple handlers, you can skip the explicit `RequestHandler` declaration above and instead pass a lambda to `Request.handle_with`.
 
 ```ruby
 class Ping < Mediate::Request
@@ -107,14 +107,14 @@ class Ping < Mediate::Request
         super()
     end
     # This will have the same behavior as the PingHandler declaration above.
-    handle_with { |request| "Received: #{request.message}" }
+    handle_with ->(request) { "Received: #{request.message}" }
 end
 
 response = Mediate.dispatch(Ping.new('hello'))
 puts response # 'Received: hello'
 ```
 
-Behind the scenes, this defines a `Ping::Handler` class that calls the given block in its `handle` method.  For testing purposes, you can get an instance of this handler class by calling `Mediate::Request.create_implicit_handler` (see [Testing implicit request handlers](#testing-implicit-request-handlers)).
+Behind the scenes, this defines a `Ping::Handler` class that calls the given lambda in its `handle` method.  For testing purposes, you can get an instance of this handler class by calling `Mediate::Request.create_implicit_handler` (see [Testing implicit request handlers](#testing-implicit-request-handlers)).
 
 #### Request polymorphism
 
@@ -129,7 +129,7 @@ Unless we registered a handler for `SubPing` explicitly.
 
 ```ruby
 class SubPing < Ping
-    handle_with { |request| "Received from SubPing: #{request.message}" }
+    handle_with ->(request) { "Received from SubPing: #{request.message}" }
 end
 puts Mediate.dispatch(SubPing.new('howdy')) # 'Received from SubPing: howdy'
 ```
@@ -252,11 +252,11 @@ Special consideration is only required when testing paths that invoke methods on
 
 #### Testing implicit request handlers
 
-How can you test a request handler defined using `handle_with` and a block like the following?
+How can you test a request handler defined using `handle_with` and a lambda like the following?
 
 ```ruby
 class ExampleRequest < Mediate::Request
-    handle_with do |request|
+    handle_with lambda do |request|
         # ....
     end
 end

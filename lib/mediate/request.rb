@@ -9,27 +9,25 @@ module Mediate
     IMPLICIT_HANDLER_CLASS_NAME = "Handler"
 
     #
-    # Registers a handler for this Request type using the given block as the handle method.
+    # Registers a handler for this Request type using the given lambda as the handle method.
     #
+    # @param [Lambda] lmbda the block that will handle the request
     # @param [Mediate::Mediator] mediator the instance to register the handler on
-    # @param [Proc] &proc the block that will handle the request
     #
-    # @raises [ArgumentError] if no block is given
+    # @raises [ArgumentError] if no lambda is given
+    # @raises [RequestHandlerAlreadyExistsError] if handler already defined for this class
     #
-    # @example When a request of this type is dispatched, the handle_with block will run
+    # @example When a request of this type is dispatched, the handle_with lambda will run
     #   class MyRequest < Mediate::Request
-    #     handle_with do |request|
+    #     handle_with lambda do |request|
     #       ## do something with request...
     #     end
     #   end
-    def self.handle_with(mediator = Mediate.mediator, &proc)
-      raise ArgumentError, "expected block to be passed to #handle_with." unless proc
+    def self.handle_with(lmbda, mediator = Mediate.mediator)
+      raise ArgumentError, "expected lambda to be passed to #handle_with." if lmbda.nil?
 
-      if implicit_handler_defined?
-        raise "#{name}::#{IMPLICIT_HANDLER_CLASS_NAME} is already defined. Cannot create implicit handler."
-      end
-
-      handler_class = define_handler(proc)
+      handler_class = define_handler(lmbda)
+      undefine_implicit_handler # remove any previous definition (this will do nothing if it doesn't exist)
       const_set(IMPLICIT_HANDLER_CLASS_NAME, handler_class)
       mediator.register_request_handler(handler_class, self)
     end
@@ -57,17 +55,14 @@ module Mediate
       remove_const(IMPLICIT_HANDLER_CLASS_NAME)
     end
 
-    def self.define_handler(proc)
+    def self.define_handler(lmbda)
       Class.new(RequestHandler) do
-        @@handle_proc = proc # rubocop:disable Style/ClassVars
-        def handle(request)
-          @@handle_proc.call(request)
-        end
+        define_method(:handle, lmbda)
       end
     end
 
     def self.implicit_handler_defined?
-      const_defined?(IMPLICIT_HANDLER_CLASS_NAME)
+      const_defined?(IMPLICIT_HANDLER_CLASS_NAME, false) # do not check ancestors
     end
 
     private_constant :IMPLICIT_HANDLER_CLASS_NAME
