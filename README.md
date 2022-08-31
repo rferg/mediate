@@ -1,5 +1,7 @@
 # Mediate
 
+[![CI](https://github.com/rferg/mediate/actions/workflows/ci.yml/badge.svg)](https://github.com/rferg/mediate/actions/workflows/ci.yml) [![Gem Version](https://badge.fury.io/rb/mediate.svg)](https://badge.fury.io/rb/mediate)
+
 A simple mediator implementation for Ruby inspired by [Mediatr](https://github.com/jbogard/MediatR).
 
 Decouple application components by sending a request through the mediator and receiving a response from a handler, instead of directly calling methods on imported classes.
