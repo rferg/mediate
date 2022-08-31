@@ -17,6 +17,8 @@ Supports request/response, notifications (i.e., events), pre- and post-request h
   - [Testing](#testing)
     - [Testing implicit request handlers](#testing-implicit-request-handlers)
   - [Using with Rails](#using-with-rails)
+    - [Nest request handler definitions within request classes](#nest-request-handler-definitions-within-request-classes)
+    - [Configure Rails to eager load other handlers in non-production environments](#configure-rails-to-eager-load-other-handlers-in-non-production-environments)
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
@@ -276,7 +278,51 @@ end
 
 ### Using with Rails
 
-TODO
+Handler registrations occur within methods called from class definitions.  In non-production environments, by default, Rails [lazy loads](https://guides.rubyonrails.org/autoloading_and_reloading_constants.html) constants.  Therefore, if handlers are not explicitly referenced, which is typical, their class definitions will not be loaded and they will not be registered as handlers on the mediator.
+
+There are two things that need to be done to work around this behavior:
+
+#### Nest request handler definitions within request classes
+
+Since requests will be explicitly referenced in, say, controllers, we can force their handler constants to load with them by nesting those definitions within the request definitions.  For example:
+
+```ruby
+class MyRequest < Mediate::Request
+  # ...
+  class MyRequestHandler < Mediate::RequestHandler
+    handles MyRequest
+    
+    def handle(request)
+      # ...
+    end
+  end
+end
+```
+
+This has the added benefit of colocating a handler with its request, making it easy to find.  This is therefore the recommended way to declare requests and their handlers.  [Implicit handler declarations](#implicit-handler-declaration) do this automatically.
+
+#### Configure Rails to eager load other handlers in non-production environments
+
+For other handlers (pre- and post-request behaviors, error handlers, notification handlers), it is typically either not possible or not practical to nest their declarations within the class definitions they handle.  You will have to add configuration to eager load these in environments where global eager loading is turned off.  This can be accomplished by adding their file paths to `config.eager_load_paths` in the relevant environment files, like so:
+
+```ruby
+# config/environments/development.rb
+
+Rails.application.configure do
+  # ...
+  [
+    'app/use_cases/common/**/*.rb',
+    'app/use_cases/**/event_handlers/**/*.rb'
+  ].each do |path|
+    config.eager_load_paths += Dir[path]
+    ActiveSupport::Reloader.to_prepare do
+      Dir[path].each { |f| require_dependency("#{Dir.pwd}/#{f}") }
+    end
+  end
+end
+```
+
+(In the above, we're assuming, for example, that we have pre- and post-request behaviors and error handlers in `app/use_cases/common/` and notification handlers in `app/use_cases/**/event_handlers/**/`.)
 
 ## Development
 
