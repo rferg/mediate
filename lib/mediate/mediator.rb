@@ -42,12 +42,12 @@ module Mediate
     def dispatch(request)
       raise ArgumentError, "request cannot be nil" if request.nil?
 
-      request_handler = resolve_handler(@request_handlers, request.class, REQUEST_BASE)
+      request_handler = resolve_handler(request_handlers, request.class, REQUEST_BASE)
       raise Errors::NoHandlerError, request.class if request_handler == NullHandler
 
-      prerequest_handlers = collect_by_inheritance(@prerequest_behaviors, request.class, REQUEST_BASE)
-      postrequest_handlers = collect_by_inheritance(@postrequest_behaviors, request.class, REQUEST_BASE)
-      run_request_pipeline(request, prerequest_handlers, request_handler, postrequest_handlers)
+      prerequest = collect_by_inheritance(prerequest_behaviors, request.class, REQUEST_BASE)
+      postrequest = collect_by_inheritance(postrequest_behaviors, request.class, REQUEST_BASE)
+      run_request_pipeline(request, prerequest, request_handler, postrequest)
     end
 
     #
@@ -60,7 +60,7 @@ module Mediate
     def publish(notification)
       raise ArgumentError, "notification cannot be nil" if notification.nil?
 
-      handler_classes = collect_by_inheritance(@notification_handlers, notification.class, NOTIF_BASE)
+      handler_classes = collect_by_inheritance(notification_handlers, notification.class, NOTIF_BASE)
       handler_classes.each do |handler_class|
         handler_class.new.handle(notification)
       rescue StandardError => e
@@ -73,26 +73,31 @@ module Mediate
     def register_request_handler(handler_class, request_class)
       validate_base_class(handler_class, Mediate::RequestHandler)
       validate_base_class(request_class, REQUEST_BASE)
-      raise_if_request_handler_exists(request_class, handler_class)
-      @request_handlers[request_class] = handler_class
+      request_handlers.compute(request_class) do |old_value|
+        unless old_value.nil? || old_value == handler_class
+          raise Errors::RequestHandlerAlreadyExistsError.new(request_class, old_value, handler_class)
+        end
+
+        handler_class
+      end
     end
 
     def register_notification_handler(handler_class, notif_class)
       validate_base_class(handler_class, Mediate::NotificationHandler)
       validate_base_class(notif_class, NOTIF_BASE, allow_base: true)
-      append_to_hash_value(@notification_handlers, notif_class, handler_class)
+      append_to_hash_value(notification_handlers, notif_class, handler_class)
     end
 
     def register_prerequest_behavior(behavior_class, request_class)
       validate_base_class(behavior_class, Mediate::PrerequestBehavior)
       validate_base_class(request_class, REQUEST_BASE, allow_base: true)
-      append_to_hash_value(@prerequest_behaviors, request_class, behavior_class)
+      append_to_hash_value(prerequest_behaviors, request_class, behavior_class)
     end
 
     def register_postrequest_behavior(behavior_class, request_class)
       validate_base_class(behavior_class, Mediate::PostrequestBehavior)
       validate_base_class(request_class, REQUEST_BASE, allow_base: true)
-      append_to_hash_value(@postrequest_behaviors, request_class, behavior_class)
+      append_to_hash_value(postrequest_behaviors, request_class, behavior_class)
     end
 
     def register_error_handler(handler_class, exception_class, dispatch_class)
@@ -119,18 +124,14 @@ module Mediate
 
     private
 
-    def raise_if_request_handler_exists(request_class, new_handler)
-      registered = @request_handlers.fetch(request_class, nil)
-      return if registered.nil? || registered == new_handler
-
-      raise Errors::RequestHandlerAlreadyExistsError.new(request_class, registered, new_handler)
-    end
+    attr_reader :exception_handlers, :postrequest_behaviors, :prerequest_behaviors, :notification_handlers,
+                :request_handlers
 
     def register_error_handler_for_dispatch(handler_class, exception_class, dispatch_class, dispatch_base_class)
       validate_base_class(handler_class, Mediate::ErrorHandler)
       validate_base_class(exception_class, StandardError, allow_base: true)
       validate_base_class(dispatch_class, dispatch_base_class, allow_base: true)
-      map = @exception_handlers.fetch_or_store(exception_class, Concurrent::Map.new)
+      map = exception_handlers.fetch_or_store(exception_class, Concurrent::Map.new)
       append_to_hash_value(map, dispatch_class, handler_class)
     end
 
@@ -157,7 +158,7 @@ module Mediate
     end
 
     def handle_exception(dispatched, exception, dispatch_base_class)
-      exception_to_dispatched_maps = collect_by_inheritance(@exception_handlers, exception.class, StandardError)
+      exception_to_dispatched_maps = collect_by_inheritance(exception_handlers, exception.class, StandardError)
       handler_classes = exception_to_dispatched_maps.reduce(Concurrent::Set.new) do |memo, curr|
         collect_by_inheritance(curr, dispatched.class, dispatch_base_class, memo)
       end
