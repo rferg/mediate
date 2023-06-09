@@ -52,12 +52,12 @@ To define a request, declare a class that inherits from `Mediate::Request`.
 
 ```ruby
 class Ping < Mediate::Request
-    attr_reader :message
+  attr_reader :message
 
-    def initialize(message)
-        @message = message
-        super()
-    end
+  def initialize(message)
+    @message = message
+    super()
+  end
 end
 ```
 
@@ -65,11 +65,11 @@ To register a handler for it, declare a class that inherits from `Mediate::Reque
 
 ```ruby
 class PingHandler < Mediate::RequestHandler
-    handles Ping
+  handles Ping
 
-    def handle(request)
-        "Received: #{request.message}"
-    end
+  def handle(request)
+    "Received: #{request.message}"
+  end
 end
 ```
 
@@ -84,15 +84,15 @@ The only requirement for `RequestHandler`s, besides implementing the `handle` me
 
 ```ruby
 class PingHandler < Mediate::RequestHandler
-    handles Ping
+  handles Ping
 
-    def initialize(service = SomeService.new)
-        @service = service
-    end
+  def initialize(service = SomeService.new)
+    @service = service
+  end
 
-    def handle(request)
-        @service.call("Received: #{request.message}")
-    end
+  def handle(request)
+    @service.call("Received: #{request.message}")
+  end
 end
 ```
 
@@ -104,17 +104,17 @@ For simple handlers, you can skip the explicit `RequestHandler` declaration abov
 
 ```ruby
 class Ping < Mediate::Request
-    attr_reader :message
+  attr_reader :message
 
-    def initialize(message)
-        @message = message
-        super()
-    end
-    # This will have the same behavior as the PingHandler declaration above.
-    handle_with ->(request) { "Received: #{request.message}" }
+  def initialize(message)
+    @message = message
+    super()
+  end
+  # This will have the same behavior as the PingHandler declaration above.
+  handle_with ->(request) { "Received: #{request.message}" }
 end
 
-response = Mediate.dispatch(Ping.new('hello'))
+response = Mediate.dispatch(Ping.new("hello"))
 puts response # 'Received: hello'
 ```
 
@@ -133,9 +133,9 @@ Unless we registered a handler for `SubPing` explicitly.
 
 ```ruby
 class SubPing < Ping
-    handle_with ->(request) { "Received from SubPing: #{request.message}" }
+  handle_with ->(request) { "Received from SubPing: #{request.message}" }
 end
-puts Mediate.dispatch(SubPing.new('howdy')) # 'Received from SubPing: howdy'
+puts Mediate.dispatch(SubPing.new("howdy")) # 'Received from SubPing: howdy'
 ```
 
 #### Pre- and post-request behaviors
@@ -146,35 +146,35 @@ Behaviors will run for any request that is or inherits from the request class re
 
 ```ruby
 class PreLoggingBehavior < Mediate::PrerequestBehavior
-    handles Mediate::Request # This will be called before all request handlers
+  handles Mediate::Request # This will be called before all request handlers
 
-    def initialize(logger = Logger)
-        @logger = logger
-    end
+  def initialize(logger = Logger)
+    @logger = logger
+  end
 
-    def handle(request)
-        @logger.info("Received request: #{request}")
-    end
+  def handle(request)
+    @logger.info("Received request: #{request}")
+  end
 end
 
 class PingValidator < Mediate::PrerequestBehavior
-    handles Ping # Will be called before Ping requests or any subclasses of Ping
+  handles Ping # Will be called before Ping requests or any subclasses of Ping
 
-    def handle(request)
-        raise "Ping is missing message" if request.message.nil?
-    end
+  def handle(request)
+    raise "Ping is missing message" if request.message.nil?
+  end
 end
 
 class PostLoggingBehavior < Mediate::PostrequestBehavior
-    handles Mediate::Request # Will be called after all request handlers
+  handles Mediate::Request # Will be called after all request handlers
 
-    def initialize(logger = Logger)
-        @logger = logger
-    end
+  def initialize(logger = Logger)
+    @logger = logger
+  end
 
-    def handle(request, result)
-        @logger.info("Request: #{request} resulted in #{result}")
-    end
+  def handle(request, result)
+    @logger.info("Request: #{request} resulted in #{result}")
+  end
 end
 ```
 
@@ -186,11 +186,11 @@ Define a notification by inheriting from `Mediate::Notification`.
 
 ```ruby
 class PostCreated < Mediate::Notification
-    attr_reader :post
+  attr_reader :post
 
-    def initialize(post)
-        @post = post
-    end
+  def initialize(post)
+    @post = post
+  end
 end
 ```
 
@@ -198,11 +198,11 @@ Declare and register a handler by inheriting from `Mediate::NotificationHandler`
 
 ```ruby
 class PostCreatedHandler < Mediate::NotificationHandler
-    handles PostCreated
-    
-    def handle(notification)
-        # do something with PostCreated notification...
-    end
+  handles PostCreated
+
+  def handle(notification)
+    # do something with PostCreated notification...
+  end
 end
 ```
 
@@ -215,22 +215,22 @@ When a request or notification handler raises a `StandardError`, the mediator wi
 ```ruby
 # This will be called on any StandardError from any request or notification handler
 class GlobalErrorHandler < Mediate::ErrorHandler
-    handles StandardError, Mediate::Request
-    handles StandardError, Mediate::Notification
+  handles StandardError, Mediate::Request
+  handles StandardError, Mediate::Notification
 
-    # dispatched is the Request or Notification
-    def handle(dispatched, exception, state)
-        # do something...
-    end
+  # dispatched is the Request or Notification
+  def handle(dispatched, exception, state)
+    # do something...
+  end
 end
 
 # This would get called when ActiveRecord::RecordNotFound is raised while handling a QueryRequest
 class NotFoundHandler < Mediate::ErrorHandler
-    handles ActiveRecord::RecordNotFound, QueryRequest
+  handles ActiveRecord::RecordNotFound, QueryRequest
 
-    def handle(dispatched, exception, state)
-        # ...
-    end
+  def handle(dispatched, exception, state)
+    # ...
+  end
 end
 ```
 
@@ -240,11 +240,11 @@ The `state` parameter of `handle` is a `Mediate::ErrorHandlerState` instance tha
 
 ```ruby
 class ValidationErrorHandler < Mediate::ErrorHandler
-    handles ActiveRecord::RecordInvalid, Mediate::Request
+  handles ActiveRecord::RecordInvalid, Mediate::Request
 
-    def handle(dispatched, exception, state)
-        state.set_as_handled(exception.record.errors)
-    end
+  def handle(_dispatched, exception, state)
+    state.set_as_handled(exception.record.errors)
+  end
 end
 ```
 
@@ -260,9 +260,9 @@ How can you test a request handler defined using `handle_with` and a lambda like
 
 ```ruby
 class ExampleRequest < Mediate::Request
-    handle_with lambda { |request|
-        # ....
-    }
+  handle_with lambda { |request|
+    # ....
+  }
 end
 ```
 
@@ -270,11 +270,11 @@ The `handle_with` method defines a handler class and registers it with the media
 
 ```ruby
 RSpec.describe "ExampleRequestHandler" do
-    let(:handler) { ExampleRequest.create_implicit_handler }
+  let(:handler) { ExampleRequest.create_implicit_handler }
 
-    it "returns something" do
-        expect(handler.handle(ExampleRequest.new)).to be_truthy
-    end
+  it "returns something" do
+    expect(handler.handle(ExampleRequest.new)).to be_truthy
+  end
 end
 ```
 
